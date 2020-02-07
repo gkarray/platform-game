@@ -1,0 +1,258 @@
+Classes :
+
+	Actor : Aucune modification.
+
+	And : Aucune modification.
+
+	Arrow : Classe heritant de Actor.
+Un objet de type Arrow possede les attributs suivants :
+
+int direction (Determine si la flèche va a droite (0), en haut (1), a gauche (2) ou en bas (3)) ;
+Vector position ;
+Actor support (Pour que la flèche se colle a un acteur si elle le rencontre dans sa trajectoire) ;
+Vector velocity ;
+Vector difference (Pour que la flèche se colle a un acteur, elle doit memoriser la difference de sa position et de la position du support au moment de la rencontre) ;
+double timer (Pour que la flèche disparaisse apres un temps après s'être collé a un acteur) ;
+
+Methodes de la classe Arrow :
+
+- getBox() et getPriority() sont intuitives ;
+- interact(Actor other) : Si la box de la flèche et la box de l'objet avec lequel elle interagit sont en contact, que l'objet en question est Solid ou est un joueuer et que l'attribut support de la flèche est null (la flèche n'est collé a aucun acteur) alors sa vitesse s'annulle, on stocke la difference des vecteurs position de la flèche et de l'objet dans l'attribut difference et l'attribut support recoit l'objet en question ;
+- draw(Input input, Output output) : Dessine la fleche en fonction de la valeur de son attribut direction en utilisant la methode drawSprite avec 3 arguments (le troisieme étant un angle de rotation) ;
+- update(Input input) : Si l'attribut support est égal a null, la flèche continue sa trajectoire, si support n'est pas égal a null, cette derniere reste collé a son support et le timer grandit a chaque tour de boucle jusqu'a atteindre la valeur 4, a ce moment la, la flèche disparait.
+
+	Background : Classe heritant de Actor.
+Un objet de type Background possede les attributs suivants :
+
+Sprite sprite ;
+Box box ;
+double angle (Au cas ou on souhaite dessiner un arriere plan tourné) ;
+
+Methodes de la classe Background :
+
+-getBox() et draw(Input input, Output output) sont intuitives ;
+-getPriority() : retourn -1 pour être dessiné en premier, car un objet Background est un arriere plan.
+
+	Block : Aucune modification, a part la surchage des constructeurs pour une utilisation plus facile.
+
+	Bomb : Classe heritant de Actor.
+Un objet de type Bomb possede les attributs suivants :
+
+double bounciness (Coefficient de rebonds decrementé a chaque fois que la bombe rebondis sur un objet solide) ;
+Vector position ;
+Vector velocity ;
+double timer (Pour que la bombe explose apres un delais precis, initialisé a 4) ;
+double timer2 (Pour gerer la transition entre l'image de la bombe noire et blanche (éxpliqué plus tard), initialisé a 0) ;
+boolean colliding (Pour gerer le frottement) ;
+
+Methodes de la classe Bomb :
+
+-getBox() et getPriority() sont intuitives ;
+-interact(Actor other) : Si other est solide et sa box est en collision avec celle de Bomb, colliding recoit true (pour que le frottement aie lieu), la vitesse sera mirrored et multiplié par le coefficient de rebonds, qui sera decrementé un tout petit peu a chaque collision (decrementé de 0.05) ;
+-preUpdate(Input input) : donnera false a colliding pour que ce dernier ne soit pas toujours a true apres une premiere collision ;
+-update(Input input) : A chaque tour de boucle, timer sera decrementé de deltaTime et timer2 sera incrementé de deltaTime, et si timer2 devient plus grand que timer, timer2 revient a 0 (peu intuitive comme methode mais pratique et sera plus expliquée dans draw), ensuite on gere les frottements, si colliding est true suite a une interaction avec un solid, la vitesse sera changé en consequences, ensuite si timer est arrivé a 0 (les 4 secondes ecoulés), la bombe explose, et donnera 50 degats de feu et 5 degats d'air a tout les acteurs situé a un rayon de 2, ensuite des particules de fumée (expliqués plus tard) se formeront, et finalement la bombe disparait ;
+-draw(Input input, Output output) : si timer2 est plus petit que timer/2 (etant donné que la valeur maximum de timer2 est timer puisque si elle depasse elle revient a 0), c'est la bombe noire qui sera dessinée, sinon c'est la bombe blanche, ce qui donnera un effet sympathique a la bombe au cours de ses 4 secondes d'existence.
+
+	Bow : Classe heritant de Actor.
+Un objet de type Bow possede les attributs suivants :
+
+int direction (Similaire a l'attribut direction de Arrow, pour savoir la direction de l'arc) ;
+double cooldown (Cooldown necessaire pour que l'arc ne crée pas des fleches n'importe comment) ;
+Vector position ;
+double time (timer decrementé pour savoir quand est ce que le cooldown est ecoulé) ;
+
+Methodes de la classe Bow :
+
+-getBox() et getPriority() sont intuitives ;
+-draw(Input input, Output output) : similaire a draw de Arrow, l'arc sera dessiné en fonction de l'attribut direction ;
+-update(Input input) : incremente le timer si il est plus petit que cooldown ;
+-interact(Actor other) : si time est plus grand que cooldown, alors en fonction de la direction, voir si un joueur est dans le champ de vision de l'arc, et si c'est le cas, l'arc crée une fleche de type Arrow, ayant la meme direction que l'arc lui meme (logique), et le timer revient a 0 (pour que l'arc ne crée pas de fleche directement apres).
+
+	Button : Classe heritant de Actor et implemente l'interface Signal.
+Un objet de type Button possede les attributs suivants :
+
+Vector position ;
+boolean isPressed ;
+boolean dynamic (Pour savoir si le bouton en question est dynamique ou pas, a savoir, si le bouton en question reste pressé si on est plus dessus ou si il revient a sa position de depart une fois que le joueur le quitte. Un bouton est par defaut dynamique s'il on le construit avec le constructeur a un argument, et ne l'est pas si on utilise le constructeur a 2 arguments et que l'on mettent false en deuxieme argument) ;
+
+Methodes de la classe Button :
+
+-getPriority() et getBox() sont intuitives ;
+-isActive() : retourne la valeur isPressed, si on presse un bouton, il devient actif ;
+-draw(Input input, Output output) : Si le bouton est dynamique, sa couleur est rouge, si il ne l'est pas, il est rouge.
+draw dessine le bouton en fonction de isActive() ;
+-postUpdate(Input input) : Si le bouton est dynamique, il faut que son attribut isPressed revienne a false a la fin de chaque tour de boucle de update de Simulator, pour ne pas qu'il reste actif apres une premiere pression (cas d'un bouton non dynamique) ;
+-interact(Actor other) : Si la box d'un joueur entre en collision avec le bouton, isPressed recoit true.
+
+	Colors : Classe de types enumerés utilisée apres pour donné une couleurs aux clés et aux portes.
+
+	Damage : Ajout d'un type Star, expliqué plus tard dans la classe du même nom.
+
+	Door : Classe heritant de Block et implemente l'interface Signal.
+Ajout d'un attribut couleur de type Colors, pour que l'on puisse avoir des portes de couleurs differentes.
+En effets, draw dessine un sprite different en fonction de l'attribut couleur.
+
+	DynamicBackground : Classe heritant de Background.
+Un objet de type DynamicBackground a en plus des attributs herités : 
+
+Actor actor (Car le DynamicBackground est un background qui suit un acteur en question, le but etant d'avoir un background suivant notre joueur) ;
+
+Methodes de la classe DynamicBackground :
+
+-getBox() : La box de DynamicBackground doit changer au cours du temps, en effet, si sa largeur et sa hauteur restent fixes, son centre doit toujours etre celui de l'acteur a laquelle elle est attaché, c'est pourquoi on intialise un DynamicBackground avec la box voulue, ensuite, getBox() retournera une box ayant pour centre la position de l'acteur a laquelle elle est attaché et la largeur et hauteur intiales trouvé avec la methode getBox() de sa classe mere, a savoir Background.
+
+	Exit : Classe heritant de Actor.
+De legeres modifications ont été ajouté a cette classe.
+J'ai en effet ajouté un attribut boolean dynamic, Signal signalDoor, Level otherLevel pour avoir deux sortes de portes Exit.
+Si on contruit un objet Exit avec un constructeur a 3 arguments (Exit normal, non dynamique), dynamic recevera false et les attributs ajoutés auront null, cet objet se comportera comme voulu pour notre projet.
+Si par contre on contruit un objet Exit avec un constructeur a 5 arguments, a savoir "public Exit(Vector position, Level next, Level otherNext, Signal signal, Signal signalDoor)"
+On aura un comportement similaire a un Exit normal sauf que,
+Si signalDoor devient actif ne serait-ce qu'une seule fois, l'attribut next de Exit recevera otherNext et la porte dirigera le joueur vers un autre niveau que celui prevu.
+J'ai apporté ces modifications pour la creation d'un niveau un peu special, et j'ai trouvé que le fait de surcharger le constructeur de ma classe et d'ajouteur ces attributs qui n'auront aucun effet si on utilise le premier constructeur est beaucoup plus pratique que de créer une nouvelle classe que j'utiliserai ensuite pour un seul niveau.
+
+	Fireball : Classe heritant de Actor.
+Ajout d'un attribut bounciness a Fireball, pour qu'a chaque fois qu'une fireball touche un solide, bounciness sera decrementé de 0.05, et la fitesse de fireball sera changée en consequences (mirrored et multipliée par bounciness), jusqu'a ce que bounciness arrive a 0, la, la boule de feu disparait completement (elle devient inutile et immobile).
+
+	Heart : Aucune modification.
+
+	Jumper : Aucune modification.
+
+	Key : Classe heritant de Actor et implemente l'interface Signal.
+Ajout d'un attribut couleur de type Colors, similairement a Door.
+
+	Led : Classe heritant de Block.
+Un objet de type DynamicBackground a en plus des attributs herités :
+
+Signal signal (Signal associé au bloc Led) ;
+
+Methodes de la classe Led :
+
+-draw(Input input, Output output) : Cette methode affiche un sprite different en fonction de l'activité de l'attribut signal de l'objet Led.
+
+	Lever : Aucune modification.
+
+	Limits : Aucune modification.
+
+	Mover : Aucune modification.
+
+	Not : Aucune modification.
+
+	Or : Aucune modification.
+
+	Oscillator : Classe heritant de Actor et implemente l'interface Signal.
+Un objet de type Oscillator possede les attributs suivants :
+
+double variation (la demi-periode de l'oscillateur initialisé a la construction) ;
+double cooldown (le cooldown qui varie et initialisé a la construction a la meme valeur que l'autre attribut) ;
+
+Methodes de la classe Oscillator : 
+
+-getPriority() intuitive ;
+-update(Input input) : Chaque tour de boucle, cooldown est decrementé de deltaTime, jusqu'a atteindre 0, dans ce cas, il recoit a nouveau la valeur de variation ;
+-isActive() : si cooldown est plus grand que variation / 2, retourne true, sinon retourne false.
+
+	Overlay : Aucune modification.
+
+	Particle : Classe heritant de Actor.
+Un objet de type Particle possede les attributs suivants :
+
+Sprite sprite ;
+double angle (utile pour un effet de rotation) ;
+Vector position ;
+double size ;
+double duration (durée de vie de l'objet) ;
+double time (timer comptant le temps passé depuis la creation de l'objet) ;
+
+Methodes de la classe Particle :
+
+-getBox() et getPriority() sont intuitives ;
+-update(Input input) : a chaque tour de boucle, timer est incrementé de deltaTime, ainsi que angle (pour un effet de rotation) et si time devient plus grand que duration, la particule disparait ;
+-draw(Input input, Output output) : dessine la sprite avec la methode surchargée drawSprite a 4 arguments, le 3 eme etant angle (qui varie a chaque tour, ce qui nous donne la rotation), le 4 eme etant la transparence. La transparence etant une valeur de 0 a 1, pour avoir une transparence qui commence a 1 et qui finit a 0 juste avant la disparition de l'objet, j'ai mis 1 - time/duration, etant donné que time va de 0 a duration.
+
+	Sign : Classe heritant de Actor
+Un objet de type Sign possede les attributs suivants :
+
+Vector position ;
+Sprite sprite (Attention, ce sprite n'est pas le sprite d'une pancarte, c'est plutot l'image qu'affiche la pancarte quand on passe a coté) ;
+boolean isActive (Pour savoir si le joueur est pres de la pancarte ou pas) ;
+
+Le but de Sign, est la creation d'un petit objet de taille 1x1 avec une petite pancarte, mais quand on passe a coté, une image, plus grande, s'affiche, avec un message dessus.
+
+Methodes de la classe Sign :
+
+-getPriority() intuitive ;
+-getBox() : La box de la sign est une box centrée en position et de taille 1x1 ;
+-interact(Actor other) : Si other est un joueur et si sa box est en collision avec la box de l'objet Sign, isActive recevera true ;
+-postUpdate(Input input) : met isActive a false a chaque tour de boucle pour que isActive ne reste pas a true apres une premiere activation ;
+-draw(Input input, Output output) : commence par dessiner une petite pancarte située a la box de l'objet, ensuite, si isActive est true, dessine la sprite en attribut (qui est l'image d'une fenetre avec du texte dedans), un peu en haut de la pancarte.
+
+	Signal : Aucune modification.
+	
+	Simulator : Aucune modification, a part l'ajout d'un attribut actualLevel qui stocque le level en cours, et une methode getActualLevel() qui nous retourne le level actuel, ou plutot l'attribut actualLevel de Simulator.
+
+	Spike : Aucune modification, a part le fait que la spike nous touche desormais meme si on vient de coté, car c'etait beaucoup trop facile sans.
+
+	Star : Classe heritant de Actor
+Un objet de type Star possede les attributs suivants :
+
+Vector position ;
+
+J'ai crée cette classe pour une seule utilisation, pour un seul niveau, et sa conception est très similaire a heart, etant donné que c'est un peu le meme principe, sauf pour le type de degats que procure la classe Star.
+
+Methodes de la classe Star :
+
+-getBox(), getPriority() et draw(Input input, Output output) sont intuitives ;
+-interact(Actor other) : Si la box d'un joueur est en collision avec la box d'un objet de type Star, le joueur recoit un degat de type STAR (ajouté a l'occasion a Damage), et la star ensuite disparait.
+
+	Switch : Classe heritant de Actor et implemente l'interface Signal
+Un objet de type Switch possede les attributs suivants :
+
+boolean v (initialisé a true) ;
+
+Le but de Switch, est de switcher entre deux joueurs avec le bouton 'S', tout cela sera expliqué plus en details a la classe Player.
+
+Methodes de la classe Switch :
+
+-getPriority() intuitive ;
+-isActive() : retourne la valeur de v ;
+-update(Input input) : si on appuie sur 'S', v = !v.
+
+	Torch : Aucune modification.
+
+	World : Ajout d'une methode abstraite getLevel() redefinie dans Simulator.
+
+	Xor : Classe implementant Signal.
+C'est simplement une porte XOR.
+
+	Player : Classe heritant de Actor.
+Beaucoup de modifications ont été apportés a cette classe :
+
+Ajout de 3 attributs :
+Signal signal ; (1)
+boolean number ; (1)
+boolean star ; (2)
+
+Ajout d'un nouveau constructeur, a 4 arguments : public Player(Vector position, Vector velocity, Signal signal, boolean number) (1)
+
+(1) Le but de l'ajout de ce nouveau constructeur ainsi que des deux arguments signal et number est un peu le meme que celui des modifications de Exit, le niveau 2 que j'ai crée met en places de joueurs.
+C'est pourquoi j'ai créée la classe Switch et que j'ai ajouté ces modifications a player.
+Alors si on utilise le constructeur defini normalment, signal aura null, number aura true, et la classe se comportera normalement
+Si par contre on utilise le nouveau constructeur, number aura la valeur du number en argument, de meme pour signal, et voici leur utilité :
+number n'est en fait pas un numero, mais etant donné que j'ai limité mon jeu a deux personnages, chacun avec un skin particulier, la methode draw de Player dessinera le Player en question en fonction de number, soit le skin par defaut si number est true, soit un skin rose si number est false.
+Pour ce qui est de signal, le signal recu en argument sera uniquement de type Switch, et si le player 1 a recu ce signal, le player 2 recevera le complementaire a ce signal.
+Ce qui veut dire que si par exemple on met au player1 un switch1, et au player2 le Not(switch1), au debut, le signal de player1 sera actif alors que celui de player2 ne le sera pas, mais si on appui sur s, switch1 sera inactif et son complementaire Not(switch1) sera desormais actif.
+J'ai donc mis presque la totalité de la methode update sous un if(signal.isActive() || signal == null) pour que lorsqu'on controle un joueur, l'autre n'est plus controlé.
+j'ai laissé par ailleurs la mise a jour de la vitesse et de la position hors de se bloc pour que le joueur ne devienne pas immobile lorsqu'on switch, et j'ai laissé la mise a jour par rapport a la mort en dehors de ce bloc aussi pour que si le joueur meurt alors qu'on le controle pas, on perds quand meme.
+Par ailleurs, j'ai aussi mis la commande de postUpdate responsable de setView sous un if(signal.isActive() || signal == null) pour que la vue soit centrée sur le joueur controlé.
+
+(2) Pour ce qui est de l'attribut star, il est toujours initialisé a false, et n'aura aucun effet sur la classe, mais n'aura true que si le Player recoit un degat de type STAR (modification de la methode hurt)(expliqué plus haut), dans ce cas, la vue aura un rayon de 20 au lieu de 8 (modification de postUpdate), le joueur ne subira plus de frottements (modification du petit bloc responsable du frottement dans la methode update), le joueur pourra sauter a l'infini (modificiation de preUpdate pour que colliding reste toujours a true), et pour finir, la mort (modification de death) du joueur n'entrainera pas le recomencemment du niveau mais dirigera le joueur vers le level EndLevel (Ecran statique ou c'est marqué "The End"), car je n'ai utilisé que dans le dernier niveau, ou je n'ai pas mis de porte de sortie.
+
+Autres ajouts divers de la classe Player :
+
+Si on meurt, on recommence au niveau même (la methode death de Player utilise getActualLevel() de Simulator)
+
+Le bouton R nous tue, pour ceux qui veulent recommencer un niveau. (Modification de update)
+
+Le bouton P lance une bombe. (Modification de update).
+
+
